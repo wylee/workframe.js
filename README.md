@@ -1,12 +1,9 @@
-# WorkFrame
+# WorkFrame.js
 
 This is an experimental front end JavaScript framework. It's based on
 the idea of React with hooks but where A) the hooks aren't defined
 inside the render function and B) have names that are more meaningful
 and easier to understand (for me anyway).
-
-There's no VDOM, so performance probably isn't great, but this is just
-an API proof-of-concept, so performance doesn't really matter.
 
 There's a basic example app here:
 https://github.com/wylee/workframe-example.
@@ -18,37 +15,48 @@ production. There are no docs, features are missing, etc.
 
 - Components are defined via setup functions that return render
   functions. There are no class-based components.
-- Inside the setup function, "hooks" like `onMount` and `onRender` can
-  be called. These serve a purpose similar to React's `useEffect`.
-- The render function is expected to return JSX.
+- A component's setup function accepts a function for setting the
+  component's state (and setting its state will cause a rerender).
+- Inside the *setup* function, not the render function, "hooks" like
+  `onMount` and `onRender` can be called. These serve a purpose similar
+  to React's `useEffect`.
+- The render function is expected to return a JSX element.
 - A component's render function and hooks are called with the
-  component's current state and a function for setting state.
+  component's current state.
+- Event handlers are configured like React using `onClick`, `onInput`,
+  etc.
 
 ## Known Issues
 
-- Child components currently aren't implemented.
 - Only the `onMount` and `onRender` hooks are currently implemented.
-- VDOM/diffing isn't implemented. Beside possibly causing poor
-  performance, this also makes input elements lose focus on re-render.
+- Because of the way `snabbdom` works, setting HTML attributes like
+  `id="app"` doesn't work; this will require intercepting incoming
+  virtual node data and converting it so `snabbdom` understands it.
 
 ## Example Component
 
     import { mount, onMount } from "workframe";
 
-    const App () => {
-      onMount((state, set) => {
-        set("someKey", someValue);
+    const App (set) => {
+      onRender((state) => {
+        // This is called on *every* render
       });
 
-      const onInput = (event, set) => {
-        set("name", event.target.value);
+      onMount((state) => {
+        // Fetch some data, etc
+        // This is called only when the component is first mounted
+      });
+
+      const setName = (name) => {
+        set("name", name);
       };
 
-      return (state, set) => {
+      return (state) => {
+        const { name } = state;
         return (
           <div>
-            <input value={state.name} onInput={(event) => onInput(event, set)} />
-            <p>Hello, {state.name}</p>
+            <input value={name} onInput={(event) => setName(event.target.value)} />
+            <p>Hello, {name}</p>
           </div>
         );
       }

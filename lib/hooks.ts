@@ -1,4 +1,4 @@
-import { OnMountAction, OnRenderAction } from "./typedefs";
+import { OnMountAction, OnRenderAction } from "./interfaces";
 
 export const onMountActions: OnMountAction<any>[] = [];
 export const onRenderActions: OnRenderAction<any>[] = [];
