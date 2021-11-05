@@ -1,6 +1,7 @@
 /* eslint @typescript-eslint/no-var-requires: "off" */
 const assert = require("assert");
 const { JSDOM } = require("jsdom");
+const { h } = require("snabbdom");
 const workframe = require("../lib");
 
 it("should contain certain exports", () => {
@@ -10,15 +11,15 @@ it("should contain certain exports", () => {
 });
 
 describe("#mount()", () => {
-  const dom = new JSDOM(`<div id="app">Placeholder</div>`);
+  const dom = new JSDOM(`<div id="mount-point">Placeholder</div>`);
   global.document = dom.window.document;
   workframe.mount(
     () => {
       return (state) => {
-        return `<div>${state.name}</div>`;
+        return h("div", {}, state.name);
       };
     },
-    "#app",
+    "#mount-point",
     {}
   );
 });

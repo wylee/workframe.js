@@ -3,17 +3,16 @@ import {
   jsx,
   attributesModule,
   eventListenersModule,
-  FunctionComponent,
   JsxVNodeChildren,
   VNodeData,
 } from "snabbdom";
-import registry from "./registry";
 import { AnyState, Setup } from "./interfaces";
+import registry from "./registry";
 
 export const patch = init([attributesModule, eventListenersModule]);
 
-export function createVnodeFromJsxNode(
-  tag: string | FunctionComponent,
+export function createVnodeFromJsxNode<S extends AnyState>(
+  tag: string | Setup<S>,
   data: VNodeData | null,
   ...children: JsxVNodeChildren[]
 ) {
@@ -43,10 +42,11 @@ export function createVnodeFromJsxNode(
       }
       delete data.on;
     }
-    const setup = tag as any;
-    const factory =
-      registry.getFactory(setup.$workFrameId) ||
-      registry.registerSetupFunction(setup);
+    const setup = tag;
+    const factory = registry.getOrRegisterComponentFactory(
+      setup.$workFrameId,
+      setup
+    );
     const component: any = factory(data);
     return jsx(component.createNode, data, ...children);
   }
@@ -70,7 +70,7 @@ export function createVnodeFromJsxNode(
 export function mount<S extends AnyState>(
   setup: Setup<S>,
   mountPoint: string | Element,
-  initialState?: S
+  initialState: S
 ): void {
   if (typeof mountPoint === "string") {
     const element = document.querySelector(mountPoint);
@@ -80,8 +80,9 @@ export function mount<S extends AnyState>(
       throw new Error(`DOM element matching selector not found: ${mountPoint}`);
     }
   }
-  const factory =
-    registry.getFactory(setup.$workFrameId) ||
-    registry.registerSetupFunction(setup);
+  const factory = registry.getOrRegisterComponentFactory(
+    setup.$workFrameId,
+    setup
+  );
   factory(initialState).mount(mountPoint);
 }

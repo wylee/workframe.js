@@ -1,9 +1,13 @@
 # WorkFrame.js
 
 This is an experimental front end JavaScript framework. It's based on
-the idea of React with hooks but where A) the hooks aren't defined
-inside the render function and B) have names that are more meaningful
-and easier to understand (for me anyway).
+the idea of React with hooks but where A) the hooks are defined in a
+setup function rather than in the render function and B) have names that
+are more meaningful and easier to understand (for me anyway).
+
+Component setup functions are somewhat similar to the setup functions in
+Vue 3 when using the composition API. For each instance of a component,
+the corresponding setup function is called to configure the instance.
 
 There's a basic example app here:
 https://github.com/wylee/workframe-example.
@@ -37,7 +41,7 @@ production. There are no docs, features are missing, etc.
 
     import { mount, onMount } from "workframe";
 
-    const App (set) => {
+    const App ({ set }) => {
       onRender((state) => {
         // This is called on *every* render
       });

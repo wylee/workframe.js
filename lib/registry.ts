@@ -9,6 +9,19 @@ export class Registry {
   private setupId = 1;
 
   /**
+   * Register a component factory.
+   *
+   * @param key
+   * @param factory
+   */
+  registerComponentFactory<S extends AnyState>(
+    key: string,
+    factory: ComponentFactory<S>
+  ): ComponentFactory<S> {
+    return (this.factories[key] = factory);
+  }
+
+  /**
    * Register a component's setup function.
    *
    * This takes a setup function and produces a component *factory*. The
@@ -26,19 +39,6 @@ export class Registry {
   }
 
   /**
-   * Register a component factory.
-   *
-   * @param key
-   * @param factory
-   */
-  registerComponentFactory<S extends AnyState>(
-    key: string,
-    factory: ComponentFactory<S>
-  ): ComponentFactory<S> {
-    return (this.factories[key] = factory);
-  }
-
-  /**
    * Get a component factory by key.
    *
    * @param key
@@ -50,6 +50,15 @@ export class Registry {
       return undefined;
     }
     return this.factories[key];
+  }
+
+  getOrRegisterComponentFactory<S extends AnyState>(
+    key: string | undefined,
+    setup: Setup<S>
+  ): ComponentFactory<S> {
+    return (
+      this.getFactory(setup.$workFrameId) || this.registerSetupFunction(setup)
+    );
   }
 }
 

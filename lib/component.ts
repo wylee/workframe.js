@@ -1,3 +1,4 @@
+import cloneDeep from "lodash/cloneDeep";
 import { VNode } from "snabbdom";
 import { onMountActions, onRenderActions } from "./hooks";
 import { Component } from "./interfaces";
@@ -22,7 +23,7 @@ export function makeComponentFactory<S extends AnyState>(
   setup: Setup<S>
 ): ComponentFactory<S> {
   return function makeComponentFactory(initialState: S): Component<S> {
-    const state: S = { ...initialState };
+    const state: S = cloneDeep(initialState);
     const renderActions: OnRenderAction<S>[] = [];
     const mountActions: OnMountAction<S>[] = [];
     let currentNode: VNode;
@@ -62,7 +63,7 @@ export function makeComponentFactory<S extends AnyState>(
       component.render();
     };
 
-    const createNode = setup(set);
+    const createNode = setup({ set, initialState });
 
     mountActions.push(...onMountActions);
     renderActions.push(...onRenderActions);
