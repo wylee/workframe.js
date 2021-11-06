@@ -4,7 +4,7 @@ import { makeComponentFactory } from "./component";
 /**
  * Component registry.
  */
-export class Registry {
+class Registry {
   private factories: Record<string, any> = {};
   private setupId = 1;
 
@@ -62,5 +62,4 @@ export class Registry {
   }
 }
 
-const registry = new Registry();
-export default registry;
+export default new Registry();
