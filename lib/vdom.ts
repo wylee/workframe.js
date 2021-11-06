@@ -48,10 +48,34 @@ export function createVnodeFromJsxNode<S extends AnyState>(
         .forEach(([key, val]) => {
           if (key.startsWith("on")) {
             delete data[key];
+
+            let directives: string[] = [];
+
             key = key.slice(2).toLowerCase();
+
+            if (key.includes(":")) {
+              const i = key.indexOf(":");
+              directives = key.slice(i + 1).split(":");
+              key = key.slice(0, i);
+            }
+
             if (data.on) {
               // XXX: Why is this^ check of data.on necessary?
-              data.on[key] = val as any;
+
+              // Prevent default unless explicitly requested
+              if (
+                !directives.includes("default") &&
+                ((tag === "form" && key === "submit") ||
+                  (tag === "a" && key === "click"))
+              ) {
+                const originalVal = val;
+                val = (event: any, ...args: any[]) => {
+                  event.preventDefault();
+                  return originalVal(event, ...args);
+                };
+              }
+
+              data.on[key] = val;
             }
           } else if (data.attrs) {
             // XXX: Why is this^ check of data.attrs necessary?
