@@ -4,6 +4,7 @@ import {
   attributesModule,
   eventListenersModule,
   JsxVNodeChildren,
+  VNode,
   VNodeData,
 } from "snabbdom";
 import { AnyState, Setup } from "./interfaces";
@@ -11,37 +12,56 @@ import registry from "./registry";
 
 export const patch = init([attributesModule, eventListenersModule]);
 
+/**
+ * Create a VNode from a JSX node.
+ *
+ * @param tag An HTML tag name *or* a component setup function
+ * @param data HTML attributes & event handles *or* component state
+ * @param children
+ */
 export function createVnodeFromJsxNode<S extends AnyState>(
   tag: string | Setup<S>,
   data: VNodeData | null,
   ...children: JsxVNodeChildren[]
-) {
+): VNode {
+  const isComponent = typeof tag === "function";
+
   if (data) {
-    if (data.on) {
-      throw new Error("`on` cannot be used as a property name");
+    if (data.attrs) {
+      throw new Error("`attrs` cannot be used as a attribute name");
     }
 
-    data.on = {};
+    if (data.on) {
+      throw new Error("`on` cannot be used as a attribute name");
+    }
 
-    Object.entries(data).forEach(([key, val]) => {
-      if (key.length > 2 && key.startsWith("on")) {
-        delete data[key];
-        key = key.slice(2).toLowerCase();
-        if (data.on) {
-          // XXX: Why is this^ check necessary?
-          data.on[key] = val as any;
-        }
+    if (isComponent) {
+      if (Object.keys(data).some((key) => key.startsWith("on"))) {
+        throw new Error("Event handlers cannot be attached to components");
       }
-    });
+    } else {
+      data.attrs = {};
+      data.on = {};
+
+      Object.entries(data)
+        .filter(([key]) => !["attrs", "on"].includes(key))
+        .forEach(([key, val]) => {
+          if (key.startsWith("on")) {
+            delete data[key];
+            key = key.slice(2).toLowerCase();
+            if (data.on) {
+              // XXX: Why is this^ check of data.on necessary?
+              data.on[key] = val as any;
+            }
+          } else if (data.attrs) {
+            // XXX: Why is this^ check of data.attrs necessary?
+            data.attrs[key] = val as any;
+          }
+        });
+    }
   }
 
-  if (typeof tag === "function") {
-    if (data && data.on) {
-      if (Object.keys(data.on).length > 0) {
-        throw new Error("Can't apply event handlers to components");
-      }
-      delete data.on;
-    }
+  if (isComponent) {
     const setup = tag;
     const factory = registry.getOrRegisterComponentFactory(
       setup.$workFrameId,
