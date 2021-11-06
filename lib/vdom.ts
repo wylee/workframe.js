@@ -26,10 +26,14 @@ const PREVENT_DEFAULT_TAG_EVENT_PAIRS: Record<string, string[]> = {
  * @param children
  */
 export function createVnodeFromJsxNode<S extends AnyState>(
-  arg: string | Setup<S>,
+  arg: string | Setup<S> | ((...arg: JsxVNodeChildren[]) => VNode[]),
   data: VNodeData | null,
   ...children: JsxVNodeChildren[]
-): VNode {
+): VNode | VNode[] {
+  if (arg === jsxFragment) {
+    return jsxFragment(children);
+  }
+
   const isComponent = typeof arg === "function";
 
   if (data) {
@@ -105,6 +109,13 @@ export function createVnodeFromJsxNode<S extends AnyState>(
 
   const tag = arg as string;
   return jsx(tag, data, ...children);
+}
+
+export function jsxFragment(children: JsxVNodeChildren[]): VNode[] {
+  return children
+    .flat(Infinity)
+    .filter((c) => !!c || c === 0)
+    .map((c) => c as VNode);
 }
 
 /**

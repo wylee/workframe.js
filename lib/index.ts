@@ -1,2 +1,2 @@
 export { onMount, onRender } from "./hooks";
-export { createVnodeFromJsxNode, mount } from "./vdom";
+export { createVnodeFromJsxNode, jsxFragment, mount } from "./vdom";
