@@ -22,7 +22,14 @@ import { patch } from "./vdom";
 export function makeComponentFactory<S extends AnyState>(
   setup: Setup<S>
 ): ComponentFactory<S> {
-  return function makeComponentFactory(initialState: S): Component<S> {
+  /**
+   * Create a component instance.
+   *
+   * This function is the configured factory.
+   *
+   * @param initialState
+   */
+  return function makeComponent(initialState: S): Component<S> {
     const state: S = cloneDeep(initialState);
     const renderActions: OnRenderAction<S>[] = [];
     const mountActions: OnMountAction<S>[] = [];
