@@ -70,7 +70,11 @@ export function makeComponentFactory<S extends AnyState>(
       component.render();
     };
 
-    const createNode = setup({ set, initialState });
+    const reset = () => {
+      set(initialState);
+    };
+
+    const createNode = setup({ initialState, set, reset });
 
     mountActions.push(...onMountActions);
     renderActions.push(...onRenderActions);

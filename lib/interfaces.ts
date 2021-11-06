@@ -14,8 +14,9 @@ export type SetStateFunc<S extends AnyState> = (
 ) => void;
 
 export interface SetupArg<S extends AnyState> {
-  set: SetStateFunc<S>;
   initialState: S;
+  set: SetStateFunc<S>;
+  reset: () => void;
 }
 
 export interface Setup<S extends AnyState> {
