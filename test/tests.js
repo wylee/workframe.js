@@ -11,15 +11,36 @@ it("should contain certain exports", () => {
 });
 
 describe("#mount()", () => {
-  const dom = new JSDOM(`<div id="mount-point">Placeholder</div>`);
+  const dom = new JSDOM(`
+    <body>
+      <div id="mount-point">
+        App will be mounted over this div (replacing it)
+      </div>
+    </body>
+  `);
+
   global.document = dom.window.document;
-  workframe.mount(
-    () => {
-      return (state) => {
-        return h("div", {}, state.name);
-      };
-    },
-    "#mount-point",
-    {}
-  );
+
+  let mountPoint;
+  let app;
+
+  const App = () => {
+    return (state) => {
+      return h("div", { attrs: { id: "app" } }, state.name);
+    };
+  };
+
+  mountPoint = dom.window.document.querySelector("#mount-point");
+  assert.ok(mountPoint);
+
+  app = dom.window.document.querySelector("#app");
+  assert.strictEqual(app, null);
+
+  workframe.mount(App, "#mount-point", {});
+
+  mountPoint = dom.window.document.querySelector("#mount-point");
+  assert.strictEqual(mountPoint, null);
+
+  app = dom.window.document.querySelector("#app");
+  assert.ok(app);
 });
