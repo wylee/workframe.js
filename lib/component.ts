@@ -1,5 +1,5 @@
 import cloneDeep from "lodash/cloneDeep";
-import { VNode } from "snabbdom";
+import { h, VNode } from "snabbdom";
 import {
   pushAndClearOnRenderActions,
   pushAndClearOnMountActions,
@@ -97,23 +97,41 @@ export function makeComponentFactory<S extends AnyState>(
 
       createNode(state: S) {
         currentNode = createNode(state) as VNode;
+        currentNode.children = currentNode.children ?? [];
+        currentNode.children.push(
+          h(
+            "div",
+            {
+              hook: {
+                insert: () => {
+                  requestAnimationFrame(() => {
+                    component.runOnRenderActions();
+                    component.runOnMountActions();
+                  });
+                },
+              },
+              attrs: {
+                style: `display: "none"`,
+              },
+            },
+            h("!", "MOUNT HOOK")
+          ) as VNode
+        );
         return currentNode;
       },
 
       mount(mountPoint: Element) {
         const newNode = component.createNode(state);
         currentNode = patch(mountPoint, newNode);
-        component.runOnRenderActions();
-        component.runOnMountActions();
       },
 
       render() {
         const oldNode = currentNode;
         const newNode = component.createNode(state);
         currentNode = patch(oldNode, newNode);
-        if (currentNode !== oldNode) {
+        requestAnimationFrame(() => {
           onRenderActions.forEach((action) => action(state));
-        }
+        });
         return currentNode;
       },
     };

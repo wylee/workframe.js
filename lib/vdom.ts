@@ -1,12 +1,10 @@
 import {
-  h,
   init,
   jsx,
   vnode,
   attributesModule,
   eventListenersModule,
   FunctionComponent,
-  Hooks,
   JsxVNodeChildren,
   VNode,
   VNodeData,
@@ -107,26 +105,7 @@ export function createVnodeFromJsxNode<S extends AnyState>(
       setup
     );
     const component: any = factory(data);
-
-    const node = jsx(
-      component.createNode as FunctionComponent,
-      data,
-      ...children
-    );
-
-    const lastChild = node.children?.length
-      ? (node.children[node.children.length - 1] as VNode)
-      : null;
-
-    if (lastChild) {
-      lastChild.data = lastChild.data ?? ({} as VNodeData);
-      lastChild.data.hook = lastChild.data.hook ?? ({} as Hooks);
-      lastChild.data.hook.insert = () => {
-        component.runOnRenderActions();
-        component.runOnMountActions();
-      };
-    }
-    return node;
+    return jsx(component.createNode as FunctionComponent, data, ...children);
   }
 
   const tag = arg as string;
@@ -172,49 +151,3 @@ export function mount<S extends AnyState>(
   );
   factory(initialState).mount(mountPoint);
 }
-
-// NOTE: I thought this overridden jsx function was needed, but things
-// seem to be working fine without it. Committing this so it's in git
-// history just in case.
-//
-// Utilities copied from snabbdom and modified. The main reason for this
-// is that snabbdom simplifies nodes that have a single child and that
-// child is text, but that doesn't work for our purposes, esp. wrt. to
-// mounting.
-//
-// function jsx(
-//   tag: string | FunctionComponent,
-//   data: VNodeData | null,
-//   ...children: JsxVNodeChildren[]
-// ): VNode {
-//   const flatChildren = flattenAndFilter(children);
-//   if (typeof tag === "function") {
-//     // Component
-//     return tag(data, flatChildren);
-//   } else {
-//     return h(tag, data, flatChildren);
-//   }
-// }
-//
-// function flattenAndFilter(children: JsxVNodeChildren[]): VNode[] {
-//   return children
-//     .flat(Infinity)
-//     .filter((child) => child && child !== 0)
-//     .map((child) => {
-//       if (
-//         typeof child === "string" ||
-//         typeof child === "number" ||
-//         typeof child === "boolean"
-//       ) {
-//         return vnode(
-//           undefined,
-//           undefined,
-//           undefined,
-//           child.toString(),
-//           undefined
-//         );
-//       } else {
-//         return child as VNode;
-//       }
-//     });
-// }
