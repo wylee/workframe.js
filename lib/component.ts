@@ -88,11 +88,15 @@ export function makeComponentFactory<S extends AnyState>(
 
     const component = {
       runOnRenderActions() {
-        onRenderActions.forEach((action) => action(state));
+        onRenderActions.forEach((action) =>
+          setTimeout(() => requestAnimationFrame(() => action(state)))
+        );
       },
 
       runOnMountActions() {
-        onMountActions.forEach((action) => action(state));
+        onMountActions.forEach((action) =>
+          setTimeout(() => requestAnimationFrame(() => action(state)))
+        );
       },
 
       createNode(state: S) {
@@ -104,10 +108,8 @@ export function makeComponentFactory<S extends AnyState>(
             {
               hook: {
                 insert: () => {
-                  requestAnimationFrame(() => {
-                    component.runOnRenderActions();
-                    component.runOnMountActions();
-                  });
+                  component.runOnRenderActions();
+                  component.runOnMountActions();
                 },
               },
               attrs: {
@@ -129,10 +131,7 @@ export function makeComponentFactory<S extends AnyState>(
         const oldNode = currentNode;
         const newNode = component.createNode(state);
         currentNode = patch(oldNode, newNode);
-        requestAnimationFrame(() => {
-          onRenderActions.forEach((action) => action(state));
-        });
-        return currentNode;
+        component.runOnRenderActions();
       },
     };
 

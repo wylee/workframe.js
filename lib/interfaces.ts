@@ -5,7 +5,7 @@ export interface Component<S extends AnyState> {
   runOnMountActions: () => void;
   createNode: (state: S) => VNode;
   mount: (mountPoint: Element) => void;
-  render: () => VNode;
+  render: () => void;
 }
 
 export type AnyState = Record<string, any>;
