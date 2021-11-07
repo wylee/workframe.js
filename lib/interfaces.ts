@@ -1,12 +1,16 @@
 import { VNode } from "snabbdom";
 
 export interface Component<S extends AnyState> {
+  runOnRenderActions: () => void;
+  runOnMountActions: () => void;
   createNode: (state: S) => VNode;
   mount: (mountPoint: Element) => void;
   render: () => VNode;
 }
 
 export type AnyState = Record<string, any>;
+
+export type GetStateFunc<S extends AnyState> = (name: keyof S) => any;
 
 export type SetStateFunc<S extends AnyState> = (
   nameOrState: keyof S | Record<keyof S, any>,
@@ -15,6 +19,7 @@ export type SetStateFunc<S extends AnyState> = (
 
 export interface SetupArg<S extends AnyState> {
   initialState: S;
+  get: GetStateFunc<S>;
   set: SetStateFunc<S>;
   reset: () => void;
 }

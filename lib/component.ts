@@ -1,6 +1,9 @@
 import cloneDeep from "lodash/cloneDeep";
 import { VNode } from "snabbdom";
-import { onMountActions, onRenderActions } from "./hooks";
+import {
+  pushAndClearOnRenderActions,
+  pushAndClearOnMountActions,
+} from "./hooks";
 import { Component } from "./interfaces";
 import {
   AnyState,
@@ -31,9 +34,13 @@ export function makeComponentFactory<S extends AnyState>(
    */
   return function makeComponent(initialState: S): Component<S> {
     const state: S = cloneDeep(initialState);
-    const renderActions: OnRenderAction<S>[] = [];
-    const mountActions: OnMountAction<S>[] = [];
+    const onRenderActions: OnRenderAction<S>[] = [];
+    const onMountActions: OnMountAction<S>[] = [];
     let currentNode: VNode;
+
+    const get = (name: keyof S): any => {
+      return state[name];
+    };
 
     /**
      * Set a single state value or multiple state values.
@@ -74,15 +81,20 @@ export function makeComponentFactory<S extends AnyState>(
       set(initialState);
     };
 
-    const createNode = setup({ initialState, set, reset });
+    const createNode = setup({ initialState, get, set, reset });
 
-    mountActions.push(...onMountActions);
-    renderActions.push(...onRenderActions);
-
-    onRenderActions.splice(0, onRenderActions.length);
-    onMountActions.splice(0, onMountActions.length);
+    pushAndClearOnRenderActions(onRenderActions);
+    pushAndClearOnMountActions(onMountActions);
 
     const component = {
+      runOnRenderActions() {
+        onRenderActions.forEach((action) => action(state));
+      },
+
+      runOnMountActions() {
+        onMountActions.forEach((action) => action(state));
+      },
+
       createNode(state: S) {
         currentNode = createNode(state) as VNode;
         return currentNode;
@@ -91,20 +103,16 @@ export function makeComponentFactory<S extends AnyState>(
       mount(mountPoint: Element) {
         const newNode = component.createNode(state);
         currentNode = patch(mountPoint, newNode);
-        renderActions.forEach((action) => action(state));
-        mountActions.forEach((action) => action(state));
+        component.runOnRenderActions();
+        component.runOnMountActions();
       },
 
       render() {
-        const mount = typeof currentNode === "undefined";
         const oldNode = currentNode;
         const newNode = component.createNode(state);
         currentNode = patch(oldNode, newNode);
         if (currentNode !== oldNode) {
-          renderActions.forEach((action) => action(state));
-        }
-        if (mount) {
-          mountActions.forEach((action) => action(state));
+          onRenderActions.forEach((action) => action(state));
         }
         return currentNode;
       },
