@@ -1,2 +1,4 @@
+export type { Action } from "./interfaces";
 export { onMount, onRender } from "./hooks";
-export { createVnodeFromJsxNode, jsxFragment, mount } from "./vdom";
+export { mount } from "./mount";
+export { createVnodeFromJsxNode, jsxFragment } from "./vdom";

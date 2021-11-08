@@ -1,4 +1,4 @@
-import { OnRenderAction, OnMountAction } from "./interfaces";
+import { AnyState, OnRenderAction, OnMountAction } from "./interfaces";
 
 const onRenderActions: OnRenderAction<any>[] = [];
 const onMountActions: OnMountAction<any>[] = [];
@@ -10,13 +10,16 @@ const onMountActions: OnMountAction<any>[] = [];
  *
  * @param action
  */
-export function onRender<S>(action: (state: S) => void) {
+export function onRender<S extends AnyState>(action: (state: S) => void) {
   onRenderActions.push(action);
 }
 
-export function pushAndClearOnRenderActions(receiver: any[]) {
-  receiver.push(...onRenderActions);
+export function consumeOnRenderActions<
+  S extends AnyState
+>(): OnRenderAction<S>[] {
+  const actions = [...onRenderActions];
   clearOnRenderActions();
+  return actions;
 }
 
 function clearOnRenderActions() {
@@ -31,13 +34,16 @@ function clearOnRenderActions() {
  *
  * @param action
  */
-export function onMount<S>(action: (state: S) => void) {
+export function onMount<S extends AnyState>(action: (state: S) => void) {
   onMountActions.push(action);
 }
 
-export function pushAndClearOnMountActions(receiver: any[]) {
-  receiver.push(...onMountActions);
+export function consumeOnMountActions<
+  S extends AnyState
+>(): OnMountAction<S>[] {
+  const actions = [...onMountActions];
   clearOnMountActions();
+  return actions;
 }
 
 function clearOnMountActions() {

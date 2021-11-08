@@ -5,20 +5,47 @@ import { makeComponentFactory } from "./component";
  * Component registry.
  */
 class Registry {
-  private factories: Record<string, any> = {};
-  private setupId = 1;
+  private factories: any[] = [];
+
+  /**
+   * Get the component factory associated with the specified setup
+   * function. If the associated factory hasn't been registered yet,
+   * it will be registered and returned.
+   *
+   * @param setup Component setup function
+   */
+  public getOrRegisterComponentFactory<S extends AnyState>(
+    setup: Setup<S>
+  ): ComponentFactory<S> {
+    return (
+      this.getFactory(setup.$workFrameId) || this.registerSetupFunction(setup)
+    );
+  }
+
+  /**
+   * Get a component factory by key.
+   *
+   * @param id
+   */
+  public getFactory<S extends AnyState>(
+    id?: number
+  ): ComponentFactory<S> | undefined {
+    if (typeof id === "undefined") {
+      return undefined;
+    }
+    return this.factories[id];
+  }
 
   /**
    * Register a component factory.
    *
-   * @param key
    * @param factory
    */
-  registerComponentFactory<S extends AnyState>(
-    key: string,
+  private registerComponentFactory<S extends AnyState>(
     factory: ComponentFactory<S>
   ): ComponentFactory<S> {
-    return (this.factories[key] = factory);
+    this.factories.push(factory);
+    return factory;
   }
 
   /**
@@ -29,36 +56,13 @@ class Registry {
    *
    * @param setup Component setup function
    */
-  registerSetupFunction<S extends AnyState>(
+  private registerSetupFunction<S extends AnyState>(
     setup: Setup<S>
   ): ComponentFactory<S> {
     const factory = makeComponentFactory(setup);
-    const id = `${setup.name}-${this.setupId++}`;
-    setup.$workFrameId = id;
-    return this.registerComponentFactory(id, factory);
-  }
-
-  /**
-   * Get a component factory by key.
-   *
-   * @param key
-   */
-  getFactory<S extends AnyState>(
-    key?: string
-  ): ComponentFactory<S> | undefined {
-    if (typeof key === "undefined") {
-      return undefined;
-    }
-    return this.factories[key];
-  }
-
-  getOrRegisterComponentFactory<S extends AnyState>(
-    key: string | undefined,
-    setup: Setup<S>
-  ): ComponentFactory<S> {
-    return (
-      this.getFactory(setup.$workFrameId) || this.registerSetupFunction(setup)
-    );
+    this.registerComponentFactory(factory);
+    setup.$workFrameId = this.factories.length - 1;
+    return factory;
   }
 }
 

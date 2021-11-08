@@ -17,53 +17,84 @@ production. There are no docs, features are missing, etc.
 
 ## Features
 
+- Elm-like architecture where the application state is defined in a
+  single object and is updated via actions.
 - Components are defined via setup functions that return render
   functions. There are no class-based components.
-- A component's setup function accepts a function for setting the
-  component's state (and setting its state will cause a rerender).
-- Inside the *setup* function, not the render function, "hooks" like
-  `onMount` and `onRender` can be called. These serve a purpose similar
-  to React's `useEffect`.
-- The render function is expected to return a JSX element.
-- A component's render function and hooks are called with the
+- Inside a component's *setup* function, not the render function,
+  "hooks" like `onMount` and `onRender` can be called. These serve a
+  purpose similar to React's `useEffect`.
+- JSX is supported. When using JSX, event handlers are configured like
+  React using `onClick`, `onInput`, etc.
+- A component's render function and hook actions are called with the
   component's current state.
-- Event handlers are configured like React using `onClick`, `onInput`,
-  etc.
 
 ## Known Issues
 
 - Only the `onMount` and `onRender` hooks are currently implemented.
-- Because of the way `snabbdom` works, setting HTML attributes like
-  `id="app"` doesn't work; this will require intercepting incoming
-  virtual node data and converting it so `snabbdom` understands it.
+- Figuring out how/when/where to trigger `onMount` and `onRender`
+  actions is tricky.
 
 ## Example Component
 
     import { mount, onMount } from "workframe";
 
-    const App ({ set }) => {
+    // The component setup function is used to set up hook actions and
+    // returns the component's render function.
+    const App (initialState) => {
       onRender((state) => {
-        // This is called on *every* render
+        // This is called on *every* render.
       });
 
       onMount((state) => {
-        // Fetch some data, etc
-        // This is called only when the component is first mounted
+        // Fetch some data, etc.
+        // This is called only when the component is first mounted.
+        // It's called *after* render actions.
       });
-
-      const setName = (name) => {
-        set("name", name);
-      };
 
       return (state) => {
         const { name } = state;
         return (
           <div>
-            <input value={name} onInput={(event) => setName(event.target.value)} />
+            <input
+              value={name}
+              onInput={(event) => setName(event.target.value)}
+            />
             <p>Hello, {name}</p>
           </div>
         );
       }
     };
 
-    mount(App, "#app", { name: "Anonymous" });
+    // This is where the app's state is actually updated. This isn't
+    // called directly--see below. This function should always return
+    // a new state object.
+    function updater(state, action) {
+      const { type, data } = action;
+      switch (type) {
+        case "SET_NAME":
+          return {
+            ...state,
+            name: data.name,
+          };
+        default:
+          throw new Error(`Unknown action type: ${action.type}`);
+      }
+    }
+
+    // This is an action. It updates the app state, which will in turn
+    // trigger a rerender.
+    function setName(name: string) {
+      return updateState({ type: "SET_NAME", data: { name } });
+    }
+
+    // This is the main entry point. It mounts the component into the
+    // DOM and returns a function that's configured to update the view/
+    // DOM whenever the app's state is updated. The new state will flow
+    // down from the root component.
+    const updateState = mount(
+      App,
+      "#mount-point",
+      updater,
+      { name: "Anonymous" },
+    );
