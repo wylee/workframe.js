@@ -47,7 +47,7 @@ export function createVnodeFromJsxNode<S extends AnyState>(
       const attrs: Record<string, any> = {};
       const handlers: Record<string, any> = {};
       const originalAttrs = data.attrs;
-      const originalHandlers = data.on;
+      const originalOn = data.on;
 
       delete data.attrs;
       delete data.on;
@@ -89,8 +89,8 @@ export function createVnodeFromJsxNode<S extends AnyState>(
         attrs.attrs = originalAttrs;
       }
 
-      if (typeof originalHandlers !== "undefined") {
-        attrs.on = originalHandlers;
+      if (typeof originalOn !== "undefined") {
+        attrs.on = originalOn;
       }
 
       data.attrs = attrs;
