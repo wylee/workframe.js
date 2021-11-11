@@ -4,7 +4,7 @@ const proc = require("child_process");
 
 const chalk = require("chalk");
 const program = require("commander");
-const express = require("express");
+const httpServer = require("http-server");
 
 program
   .version(`workframe ${require("../package").version}`)
@@ -13,11 +13,13 @@ program
 program
   .command("serve")
   .description("Run dev server")
+  .option("-d, --dir [dir]", "Directory", "./public")
+  .option("-H, --host [host]", "Host", "0.0.0.0")
   .option("-p, --port [port]", "Port", 8000)
   .action((options) => {
-    const cwd = process.cwd();
-    const publicDir = path.join(cwd, "public");
-    const { port } = options;
+    const { dir, host, port } = options;
+    const termWidth = process.stdout.columns || 80;
+    const hr = new Array(termWidth).join("-");
 
     // Log to stdout or stderr
     const log = (stream, string) =>
@@ -26,22 +28,22 @@ program
     // Top level info prefixed with an arrow
     const info = (...args) => console.info("→", ...args);
 
-    console.log(chalk.green.underline("Running dev server\n"));
+    console.log(chalk.green(hr));
+    console.log(chalk.green("Running dev server"));
 
-    info(`Serving public directory on port ${port}:`);
-    console.info(`  ${publicDir}\n`);
-
-    info("Building and watching via `npm run watch`\n");
+    info("Building and watching via `npm run watch`");
     const watchProc = proc.spawn("npm", ["run", "watch"]);
-    watchProc.stdout.on("data", (data) => log("stdout", data));
-    watchProc.stderr.on("data", (data) => log("stderr", data));
+    setTimeout(() => {
+      watchProc.stdout.on("data", (data) => log("stdout", data));
+      watchProc.stderr.on("data", (data) => log("stderr", data));
+    });
 
-    info(`Starting server on port ${port}\n`);
-    express()
-      .use(express.static("public"))
-      .listen(port, () => {
-        info(`View app at http://localhost:${port}/\n`);
-      });
+    info(`Starting HTTP server`);
+    const server = httpServer.createServer({ root: dir });
+    server.listen(port, host, () => {
+      info(`Now serving ${server.root} at http://${host}:${port}/`);
+      console.log(chalk.green(hr));
+    });
   });
 
 program.parse(process.argv);
