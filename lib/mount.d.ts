@@ -9,4 +9,4 @@ import { Action, AnyState, Setup } from "./interfaces";
  * @param mountPoint DOM node or selector to mount root component into
  * @param initialState Initial root state
  */
-export declare function mount<S extends AnyState, T>(setup: Setup<S>, mountPoint: string | Element, initialState: S, updater: (state: S, action: Action<T>) => S): (action: Action<T>) => S;
+export declare function mount<S extends AnyState, T>(setup: Setup<S>, mountPoint: string | Element, initialState: S, updater: (state: S, action: Action<T>) => S, children?: any[]): (action: Action<T>) => S;

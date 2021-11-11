@@ -1,5 +1,4 @@
-import cloneDeep from "lodash/cloneDeep";
-import { h, VNode } from "snabbdom";
+import { h, vnode, VNode } from "snabbdom";
 import { consumeOnRenderActions, consumeOnMountActions } from "./hooks";
 import { Component } from "./interfaces";
 import {
@@ -29,50 +28,89 @@ export function makeComponentFactory<S extends AnyState>(
    * @param initialState
    */
   return function makeComponent(initialState: S): Component<S> {
-    const onRenderActions: OnRenderAction<S>[] = [];
     const onMountActions: OnMountAction<S>[] = [];
+    const onRenderActions: OnRenderAction<S>[] = [];
     const createNode = setup(initialState);
 
-    onRenderActions.push(...consumeOnRenderActions());
     onMountActions.push(...consumeOnMountActions());
+    onRenderActions.push(...consumeOnRenderActions());
 
     const component = {
-      runOnRenderActions(state: S) {
-        onRenderActions.forEach((action) =>
-          requestAnimationFrame(() => action(state))
-        );
-      },
+      name: setup.name,
 
-      runOnMountActions(state: S) {
+      runOnMountActions() {
         onMountActions.forEach((action) =>
-          requestAnimationFrame(() => action(state))
+          requestAnimationFrame(() => action(initialState))
         );
       },
 
-      createNode(state: S) {
-        const node = createNode(state) as VNode;
-        node.children = node.children ?? [];
-        node.children.push(
-          h(
-            "div",
-            {
-              hook: {
-                insert: () => {
-                  component.runOnRenderActions(state);
-                  component.runOnMountActions(state);
-                },
-              },
-              attrs: {
-                style: `display: "none"`,
-              },
-            },
-            h("!", "MOUNT HOOK")
-          ) as VNode
+      runOnRenderActions(state?: S) {
+        onRenderActions.forEach((action) =>
+          requestAnimationFrame(() => action(state ?? initialState))
         );
+      },
+
+      createNode(state: S, children?: any[]) {
+        const node = createNode(state, children) as VNode;
+        setRootComponentOfChildren(node, component);
+        addMountHookChild(node, component);
         return node;
       },
     };
 
     return component;
   };
+}
+
+function addMountHookChild<AnyState>(
+  node: VNode,
+  component: Component<AnyState>
+) {
+  node.children = node.children ?? [];
+  node.children.push(
+    h(
+      "div",
+      {
+        hook: {
+          insert: () => {
+            component.runOnMountActions();
+          },
+        },
+        attrs: {
+          style: `display: "none"`,
+        },
+      },
+      h("!", "MOUNT HOOK")
+    ) as VNode
+  );
+}
+
+// Set root component of node's children, their children, and so on.
+// This is used to determine when a component is rendered.
+function setRootComponentOfChildren<AnyState>(
+  node: VNode,
+  component: Component<AnyState>
+) {
+  const children = node.children;
+  if (children) {
+    children.forEach((child: string | VNode, i) => {
+      if (typeof child === "object" && child.data?.rootComponent) {
+        // This child has a closer root component further down the tree.
+        return;
+      }
+      if (typeof child === "string") {
+        child = children[i] = vnode(
+          undefined,
+          { rootComponent: component },
+          undefined,
+          child,
+          undefined
+        );
+      } else {
+        child.data = child.data ?? {};
+        child.data.rootComponent = component;
+      }
+      setRootComponentOfChildren(child, component);
+    });
+  }
 }

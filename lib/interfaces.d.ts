@@ -6,14 +6,15 @@ export interface Action<T> {
 }
 export interface Setup<S extends AnyState> {
     (initialState?: S): Render<S>;
-    $workFrameId?: number;
+    workframeId?: number;
 }
-export declare type OnRenderAction<S extends AnyState> = (state: S) => void;
 export declare type OnMountAction<S extends AnyState> = (state: S) => void;
-export declare type Render<S extends AnyState> = (state: S) => JSX.Element | VNode;
-export declare type ComponentFactory<S extends AnyState> = any;
+export declare type OnRenderAction<S extends AnyState> = (state?: S) => void;
+export declare type Render<S extends AnyState> = (state: S, children?: any[]) => JSX.Element | VNode;
+export declare type ComponentFactory<S extends AnyState> = (initialState: S) => Component<S>;
 export interface Component<S extends AnyState> {
-    runOnRenderActions: (state: S) => void;
-    runOnMountActions: (state: S) => void;
-    createNode: (state: S) => VNode;
+    name: string;
+    runOnMountActions: () => void;
+    runOnRenderActions: (state?: S) => void;
+    createNode: (state: S, children?: any[]) => VNode;
 }

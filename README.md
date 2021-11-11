@@ -42,14 +42,14 @@ production. There are no docs, features are missing, etc.
     // The component setup function is used to set up hook actions and
     // returns the component's render function.
     const App (initialState) => {
-      onRender((state) => {
-        // This is called on *every* render.
-      });
-
       onMount((state) => {
         // Fetch some data, etc.
         // This is called only when the component is first mounted.
         // It's called *after* render actions.
+      });
+
+      onRender((state) => {
+        // This is called on *every* render.
       });
 
       return (state) => {

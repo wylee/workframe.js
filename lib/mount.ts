@@ -17,7 +17,8 @@ export function mount<S extends AnyState, T>(
   setup: Setup<S>,
   mountPoint: string | Element,
   initialState: S,
-  updater: (state: S, action: Action<T>) => S
+  updater: (state: S, action: Action<T>) => S,
+  children?: any[]
 ): (action: Action<T>) => S {
   if (typeof mountPoint === "string") {
     const element = document.querySelector(mountPoint);
@@ -29,10 +30,10 @@ export function mount<S extends AnyState, T>(
   }
 
   const rootFactory = registry.getOrRegisterComponentFactory(setup);
-  const rootComponent = rootFactory();
+  const rootComponent = rootFactory(cloneDeep(initialState));
 
   let state = cloneDeep(initialState);
-  let rootNode = rootComponent.createNode(state);
+  let rootNode = rootComponent.createNode(state, children);
 
   setTimeout(() => {
     rootNode = patch(mountPoint as Element, rootNode);

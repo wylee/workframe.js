@@ -18,7 +18,7 @@ class Registry {
     setup: Setup<S>
   ): ComponentFactory<S> {
     return (
-      this.getFactory(setup.$workFrameId) || this.registerSetupFunction(setup)
+      this.getFactory(setup.workframeId) || this.registerSetupFunction(setup)
     );
   }
 
@@ -61,7 +61,7 @@ class Registry {
   ): ComponentFactory<S> {
     const factory = makeComponentFactory(setup);
     this.registerComponentFactory(factory);
-    setup.$workFrameId = this.factories.length - 1;
+    setup.workframeId = this.factories.length - 1;
     return factory;
   }
 }
