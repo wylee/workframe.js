@@ -18,7 +18,8 @@ import {
  * @param setup
  */
 export function makeComponentFactory<S extends AnyState>(
-  setup: Setup<S>
+  setup: Setup<S>,
+  getState: () => AnyState
 ): ComponentFactory<S> {
   /**
    * Create a component instance.
@@ -28,9 +29,9 @@ export function makeComponentFactory<S extends AnyState>(
    * @param initialState
    */
   return function makeComponent(initialState: S): Component<S> {
-    const onMountActions: OnMountAction<S>[] = [];
-    const onRenderActions: OnRenderAction<S>[] = [];
     const createNode = setup(initialState);
+    const onMountActions: OnMountAction<AnyState>[] = [];
+    const onRenderActions: OnRenderAction<AnyState>[] = [];
 
     onMountActions.push(...consumeOnMountActions());
     onRenderActions.push(...consumeOnRenderActions());
@@ -38,23 +39,23 @@ export function makeComponentFactory<S extends AnyState>(
     const component = {
       name: setup.name,
 
-      runOnMountActions() {
-        onMountActions.forEach((action) =>
-          requestAnimationFrame(() => action(initialState))
-        );
-      },
-
-      runOnRenderActions(state?: S) {
-        onRenderActions.forEach((action) =>
-          requestAnimationFrame(() => action(state ?? initialState))
-        );
-      },
-
       createNode(state: S, children?: any[]) {
         const node = createNode(state, children) as VNode;
         setRootComponentOfChildren(node, component);
         addMountHookChild(node, component);
         return node;
+      },
+
+      runOnMountActions() {
+        onMountActions.forEach((action) =>
+          requestAnimationFrame(() => action(getState()))
+        );
+      },
+
+      runOnRenderActions() {
+        onRenderActions.forEach((action) =>
+          requestAnimationFrame(() => action(getState()))
+        );
       },
     };
 
@@ -62,9 +63,9 @@ export function makeComponentFactory<S extends AnyState>(
   };
 }
 
-function addMountHookChild<AnyState>(
+function addMountHookChild<S extends AnyState>(
   node: VNode,
-  component: Component<AnyState>
+  component: Component<S>
 ) {
   node.children = node.children ?? [];
   node.children.push(
@@ -87,9 +88,9 @@ function addMountHookChild<AnyState>(
 
 // Set root component of node's children, their children, and so on.
 // This is used to determine when a component is rendered.
-function setRootComponentOfChildren<AnyState>(
+function setRootComponentOfChildren<S extends AnyState>(
   node: VNode,
-  component: Component<AnyState>
+  component: Component<S>
 ) {
   const children = node.children;
   if (children) {

@@ -3,7 +3,14 @@ import { AnyState, ComponentFactory, Setup } from "./interfaces";
  * Component registry.
  */
 declare class Registry {
+    getState: () => AnyState;
     private factories;
+    /**
+     * Register a function that returns the app's current state.
+     *
+     * @param getState
+     */
+    registerGetState(getState: () => AnyState): void;
     /**
      * Get the component factory associated with the specified setup
      * function. If the associated factory hasn't been registered yet,

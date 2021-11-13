@@ -7,4 +7,4 @@ import { AnyState, ComponentFactory, Setup } from "./interfaces";
  *
  * @param setup
  */
-export declare function makeComponentFactory<S extends AnyState>(setup: Setup<S>): ComponentFactory<S>;
+export declare function makeComponentFactory<S extends AnyState>(setup: Setup<S>, getState: () => AnyState): ComponentFactory<S>;

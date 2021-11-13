@@ -153,8 +153,7 @@ export function createVnodeFromJsxNode<S extends AnyState>(
     const state = data as S;
     const factory = registry.getOrRegisterComponentFactory(setup);
     const component = factory(state);
-    const node = component.createNode(state, flattenedChildren);
-    return node;
+    return component.createNode(state, flattenedChildren);
   }
 
   const tag = arg as string;

@@ -12,7 +12,7 @@ import { AnyState, OnRenderAction, OnMountAction } from "./interfaces";
  *
  * @param action
  */
-export declare function onMount<S extends AnyState>(action: (initialState: S) => void): void;
+export declare function onMount<S extends AnyState>(action: (appState: S) => void): void;
 export declare function consumeOnMountActions<S extends AnyState>(): OnMountAction<S>[];
 /**
  * Hook to register an action to be run when a component is rendered.
@@ -28,5 +28,5 @@ export declare function consumeOnMountActions<S extends AnyState>(): OnMountActi
  *
  * @param action
  */
-export declare function onRender<S extends AnyState>(action: (state: S) => void): void;
+export declare function onRender<S extends AnyState>(action: (appState: S) => void): void;
 export declare function consumeOnRenderActions<S extends AnyState>(): OnRenderAction<S>[];

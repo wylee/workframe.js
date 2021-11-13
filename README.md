@@ -27,7 +27,7 @@ production. There are no docs, features are missing, etc.
   React's `useEffect`.
 - A component's render function is called with the component's current
   state. Its `onMount` actions are called with its *initial* state.
-  Its `onRender` actions are called with its *current* state.
+  Its `onRender` actions are called with the current *app* state.
 - JSX is supported. When using JSX, event handlers are configured like
   React using `onClick`, `onInput`, etc.
 
@@ -39,12 +39,6 @@ production. There are no docs, features are missing, etc.
   used instead of `useMemo`.
 - Figuring out how/when/where to trigger `onMount` and `onRender`
   actions is tricky.
-- State isn't being passed to `onRender` actions.
-- Components can't access state elsewhere in the state tree. Maybe this
-  isn't actually an issue though?
-- JSX is required due to implementation details around render/rerender
-  detection. This "should" be fixed, but I may or may not get around to
-  it.
 
 ## Example Component
 
@@ -52,20 +46,22 @@ production. There are no docs, features are missing, etc.
   import { mount, onMount } from "workframe";
 
   // The component setup function is used to set up hook actions and
-  // returns the component's render function.
-  const App (initialState) => {
-    onMount((state) => {
-      // This will be called only when the component is first mounted.
-      // It will be called *before* the `onRender` action.
+  // returns the component's render function. It's passed the initial
+  // *component* state (a slice of the app state).
+  const App = (initialState) => {
+    onMount((appState) => {
+      // This will be called when the component is first mounted with
+      // the current appState. It will be called *before* the `onRender`
+      // action.
     });
 
-    onRender((state) => {
-      // This is called on *every* render. On mount it will be called
-      // *after* the `onMount` action.
+    onRender((appState) => {
+      // This is called on *every* render with the current app state.
+      // On mount it will be called *after* the `onMount` action.
     });
 
-    return (state) => {
-      const { name } = state;
+    return (currentState) => {
+      const { name } = currentState;
       return (
         <div>
           <input
@@ -104,7 +100,7 @@ production. There are no docs, features are missing, etc.
   // DOM and returns a function that's configured to update the view/
   // DOM whenever the app's state is updated. The new state will flow
   // down from the root component.
-  const updateState = mount(
+  const [getState, updateState] = mount(
     App,
     "#mount-point",
     updater,

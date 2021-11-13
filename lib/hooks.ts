@@ -16,7 +16,7 @@ const onRenderActions: OnRenderAction<any>[] = [];
  *
  * @param action
  */
-export function onMount<S extends AnyState>(action: (initialState: S) => void) {
+export function onMount<S extends AnyState>(action: (appState: S) => void) {
   onMountActions.push(action);
 }
 
@@ -46,7 +46,7 @@ function clearOnMountActions() {
  *
  * @param action
  */
-export function onRender<S extends AnyState>(action: (state: S) => void) {
+export function onRender<S extends AnyState>(action: (appState: S) => void) {
   onRenderActions.push(action);
 }
 

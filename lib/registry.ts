@@ -5,7 +5,17 @@ import { makeComponentFactory } from "./component";
  * Component registry.
  */
 class Registry {
+  public getState: () => AnyState = () => ({});
   private factories: any[] = [];
+
+  /**
+   * Register a function that returns the app's current state.
+   *
+   * @param getState
+   */
+  public registerGetState(getState: () => AnyState) {
+    this.getState = getState;
+  }
 
   /**
    * Get the component factory associated with the specified setup
@@ -59,7 +69,7 @@ class Registry {
   private registerSetupFunction<S extends AnyState>(
     setup: Setup<S>
   ): ComponentFactory<S> {
-    const factory = makeComponentFactory(setup);
+    const factory = makeComponentFactory(setup, this.getState);
     this.registerComponentFactory(factory);
     setup.workframeId = this.factories.length - 1;
     return factory;

@@ -12,6 +12,7 @@ import { patch } from "./vdom";
  * @param setup Root component's setup function
  * @param mountPoint DOM node or selector to mount root component into
  * @param initialState Initial root state
+ * @param children Child nodes
  */
 export function mount<S extends AnyState, T>(
   setup: Setup<S>,
@@ -29,21 +30,23 @@ export function mount<S extends AnyState, T>(
     }
   }
 
-  const rootFactory = registry.getOrRegisterComponentFactory(setup);
-  const rootComponent = rootFactory(cloneDeep(initialState));
-
   let state = cloneDeep(initialState);
+  registry.registerGetState(() => state);
+
+  const rootFactory = registry.getOrRegisterComponentFactory(setup);
+  const rootComponent = rootFactory(initialState);
+
   let rootNode = rootComponent.createNode(state, children);
 
-  setTimeout(() => {
-    rootNode = patch(mountPoint as Element, rootNode);
-  });
-
-  return function updateState(action: Action<T>): S {
+  function updateState(action: Action<T>): S {
     state = updater(state, action);
     const oldRootNode = rootNode;
-    const newRootNode = rootComponent.createNode(state);
+    const newRootNode = rootComponent.createNode(state, children);
     rootNode = patch(oldRootNode, newRootNode);
     return state;
-  };
+  }
+
+  rootNode = patch(mountPoint as Element, rootNode);
+
+  return updateState;
 }
