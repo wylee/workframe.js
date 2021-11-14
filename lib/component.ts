@@ -67,23 +67,23 @@ function addMountHookChild<S extends AnyState>(
   node: VNode,
   component: Component<S>
 ) {
-  node.children = node.children ?? [];
-  node.children.push(
-    h(
-      "div",
-      {
-        hook: {
-          insert: () => {
-            component.runOnMountActions();
-          },
-        },
-        attrs: {
-          style: `display: "none"`,
+  const child = h(
+    "div",
+    {
+      hook: {
+        insert: () => {
+          component.runOnMountActions();
+          child.elm?.parentNode?.removeChild(child.elm);
         },
       },
-      h("!", "MOUNT HOOK")
-    ) as VNode
-  );
+      attrs: {
+        style: `display: "none"`,
+      },
+    },
+    h("!", "MOUNT HOOK")
+  ) as VNode;
+  node.children = node.children ?? [];
+  node.children.push(child);
 }
 
 // Set root component of node's children, their children, and so on.
