@@ -20,14 +20,15 @@ production. There are no docs, features are missing, etc.
   single object and is updated via actions. Actions are the *only* way
   to update state.
 - Components are defined via setup functions that return render
-  functions. There are no class-based components.
+  functions. There are no class-based components. The setup function is
+  passed the component's initial state.
 - Inside a component's *setup* function, not the render function,
   "hooks" like `onMount` and `onRender` can be used to register actions
   that will be run on mount and render. These serve a purpose similar to
   React's `useEffect`.
 - A component's render function is called with the component's current
-  state. Its `onMount` actions are called with its *initial* state.
-  Its `onRender` actions are called with the current *app* state.
+  state. Its `onMount` and `onRender` actions are called with the
+  current *app* state.
 - JSX is supported. When using JSX, event handlers are configured like
   React using `onClick`, `onInput`, etc.
 
