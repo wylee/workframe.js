@@ -31,12 +31,10 @@ export function mount<S extends AnyState, T>(
   }
 
   let state = cloneDeep(initialState);
-  registry.registerGetState(() => state);
 
-  const rootFactory = registry.getOrRegisterComponentFactory(setup);
-  const rootComponent = rootFactory(initialState);
-
-  let rootNode = rootComponent.createNode(state, children);
+  function getState() {
+    return state;
+  }
 
   function updateState(action: Action<T>): S {
     state = updater(state, action);
@@ -46,7 +44,16 @@ export function mount<S extends AnyState, T>(
     return state;
   }
 
-  rootNode = patch(mountPoint as Element, rootNode);
+  registry.registerGetState(getState);
+  registry.registerUpdateState(updateState);
+
+  const rootFactory = registry.getOrRegisterComponentFactory(setup);
+  const rootComponent = rootFactory(initialState);
+
+  let rootNode = patch(
+    mountPoint as Element,
+    rootComponent.createNode(state, children)
+  );
 
   return updateState;
 }

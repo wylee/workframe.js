@@ -1,13 +1,7 @@
 import { h, vnode, VNode } from "snabbdom";
-import { consumeOnRenderActions, consumeOnMountActions } from "./hooks";
 import { Component } from "./interfaces";
-import {
-  AnyState,
-  ComponentFactory,
-  OnMountAction,
-  OnRenderAction,
-  Setup,
-} from "./interfaces";
+import { AnyState, ComponentFactory, Setup } from "./interfaces";
+import registry from "./registry";
 
 /**
  * Make a factory for creating components from a setup function.
@@ -29,15 +23,13 @@ export function makeComponentFactory<S extends AnyState>(
    * @param initialState
    */
   return function makeComponent(initialState: S): Component<S> {
-    const createNode = setup(initialState);
-    const onMountActions: OnMountAction<AnyState>[] = [];
-    const onRenderActions: OnRenderAction<AnyState>[] = [];
-
-    onMountActions.push(...consumeOnMountActions());
-    onRenderActions.push(...consumeOnRenderActions());
+    const id = setup.workframeId as number;
+    const name = setup.name;
+    const createNode = registry.callSetup(setup, initialState);
 
     const component = {
-      name: setup.name,
+      id,
+      name,
 
       createNode(state: S, children?: any[]) {
         const node = createNode(state, children) as VNode;
@@ -47,13 +39,15 @@ export function makeComponentFactory<S extends AnyState>(
       },
 
       runOnMountActions() {
-        onMountActions.forEach((action) =>
+        const actions = registry.getMountActions(id);
+        actions.forEach((action) =>
           requestAnimationFrame(() => action(getState()))
         );
       },
 
       runOnRenderActions() {
-        onRenderActions.forEach((action) =>
+        const actions = registry.getRenderActions(id);
+        actions.forEach((action) =>
           requestAnimationFrame(() => action(getState()))
         );
       },

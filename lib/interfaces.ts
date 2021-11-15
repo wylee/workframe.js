@@ -21,6 +21,7 @@ export type ComponentFactory<S extends AnyState> = (
 ) => Component<S>;
 
 export interface Component<S extends AnyState> {
+  id: number;
   name: string;
   runOnMountActions: () => void;
   runOnRenderActions: () => void;

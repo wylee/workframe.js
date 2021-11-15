@@ -1,4 +1,12 @@
-import { AnyState, ComponentFactory, Setup } from "./interfaces";
+import {
+  Action,
+  AnyState,
+  ComponentFactory,
+  OnMountAction,
+  OnRenderAction,
+  Render,
+  Setup,
+} from "./interfaces";
 import { makeComponentFactory } from "./component";
 
 /**
@@ -6,7 +14,12 @@ import { makeComponentFactory } from "./component";
  */
 class Registry {
   public getState: () => AnyState = () => ({});
+  public updateState: (action: Action<any>) => AnyState = () => ({});
+
   private factories: any[] = [];
+  private currentComponentId = 0;
+  private mountActions: { [id: number]: OnMountAction<any>[] } = {};
+  private renderActions: { [id: number]: OnRenderAction<any>[] } = {};
 
   /**
    * Register a function that returns the app's current state.
@@ -15,6 +28,29 @@ class Registry {
    */
   public registerGetState(getState: () => AnyState) {
     this.getState = getState;
+  }
+
+  /**
+   * Register a function that sets the app's current state.
+   *
+   * @param updateSate
+   */
+  public registerUpdateState<T>(updateState: (action: Action<T>) => AnyState) {
+    this.updateState = updateState;
+  }
+
+  /**
+   * Get a component factory by ID.
+   *
+   * @param id
+   */
+  public getFactory<S extends AnyState>(
+    id?: number
+  ): ComponentFactory<S> | undefined {
+    if (typeof id === "undefined") {
+      return undefined;
+    }
+    return this.factories[id];
   }
 
   /**
@@ -33,17 +69,20 @@ class Registry {
   }
 
   /**
-   * Get a component factory by key.
+   * Register a component's setup function.
    *
-   * @param id
+   * This takes a setup function and produces a component *factory*. The
+   * factory is registered in this registry.
+   *
+   * @param setup Component setup function
    */
-  public getFactory<S extends AnyState>(
-    id?: number
-  ): ComponentFactory<S> | undefined {
-    if (typeof id === "undefined") {
-      return undefined;
-    }
-    return this.factories[id];
+  private registerSetupFunction<S extends AnyState>(
+    setup: Setup<S>
+  ): ComponentFactory<S> {
+    const factory = makeComponentFactory(setup, this.getState);
+    this.registerComponentFactory(factory);
+    setup.workframeId = this.factories.length - 1;
+    return factory;
   }
 
   /**
@@ -59,20 +98,75 @@ class Registry {
   }
 
   /**
-   * Register a component's setup function.
+   * Call component setup function and return its render function.
    *
-   * This takes a setup function and produces a component *factory*. The
-   * factory is registered in this registry.
+   * This sets the current component so that any `onMount` and/or
+   * `onRender` hooks in the setup function will be registered to the
+   * component.
    *
-   * @param setup Component setup function
+   * @param setup
    */
-  private registerSetupFunction<S extends AnyState>(
-    setup: Setup<S>
-  ): ComponentFactory<S> {
-    const factory = makeComponentFactory(setup, this.getState);
-    this.registerComponentFactory(factory);
-    setup.workframeId = this.factories.length - 1;
-    return factory;
+  public callSetup<S extends AnyState>(
+    setup: Setup<S>,
+    initialState: S
+  ): Render<S> {
+    this.currentComponentId = setup.workframeId as number;
+    const render = setup(initialState);
+    return render;
+  }
+
+  /**
+   * Add mount action for *current* component.
+   *
+   * @param id
+   * @param action
+   */
+  public addMountAction(action: OnMountAction<any>) {
+    const id = this.currentComponentId;
+    if (typeof this.mountActions[id] === "undefined") {
+      this.mountActions[id] = [];
+    }
+    const actions = this.mountActions[id];
+    actions.push(action);
+  }
+
+  /**
+   * Get mount actions for component.
+   *
+   * @param id
+   */
+  public getMountActions(id?: number) {
+    if (typeof id === "undefined") {
+      throw new Error("Component setup ID was not initialized");
+    }
+    return this.mountActions[id];
+  }
+
+  /**
+   * Add render action for *current* component.
+   *
+   * @param id
+   * @param action
+   */
+  public addRenderAction(action: OnRenderAction<any>) {
+    const id = this.currentComponentId;
+    if (typeof this.renderActions[id] === "undefined") {
+      this.renderActions[id] = [];
+    }
+    const actions = this.renderActions[id];
+    actions.push(action);
+  }
+
+  /**
+   * Get render actions for component.
+   *
+   * @param id
+   */
+  public getRenderActions(id?: number) {
+    if (typeof id === "undefined") {
+      throw new Error("Component setup ID was not initialized");
+    }
+    return this.renderActions[id];
   }
 }
 
