@@ -23,9 +23,8 @@ export function makeComponentFactory<S extends AnyState>(
    * @param initialState
    */
   return function makeComponent(initialState: S): Component<S> {
-    const id = setup.workframeId as number;
     const name = setup.name;
-    const createNode = registry.callSetup(setup, initialState);
+    const [id, createNode] = registry.setUpComponent(setup, initialState);
 
     const component = {
       id,

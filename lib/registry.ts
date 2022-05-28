@@ -16,10 +16,10 @@ class Registry {
   public getAppState: () => AnyState = () => ({});
   public updateAppState: (action: Action<any>) => AnyState = () => ({});
 
+  private setupFunctions: any[] = [];
   private factories: any[] = [];
-  private currentComponentId = 0;
-  private mountActions: { [id: number]: OnMountAction<any>[] } = {};
-  private renderActions: { [id: number]: OnRenderAction<any>[] } = {};
+  private mountActions: OnMountAction<any>[][] = [];
+  private renderActions: OnRenderAction<any>[][] = [];
 
   /**
    * Register a function that returns the app's current state.
@@ -35,20 +35,6 @@ class Registry {
    *
    * @param updateAppState
    */
-  }
-
-  /**
-   * Get a component factory by ID.
-   *
-   * @param id
-   */
-  public getFactory<S extends AnyState>(
-    id?: number
-  ): ComponentFactory<S> | undefined {
-    if (typeof id === "undefined") {
-      return undefined;
-    }
-    return this.factories[id];
   public registerUpdateAppState<T>(updateAppState: (action: Action<T>) => AnyState) {
     this.updateAppState = updateAppState;
   }
@@ -63,70 +49,55 @@ class Registry {
   public getOrRegisterComponentFactory<S extends AnyState>(
     setup: Setup<S>
   ): ComponentFactory<S> {
-    return (
-      this.getFactory(setup.workframeId) || this.registerSetupFunction(setup)
-    );
+    const index = this.setupFunctions.indexOf(setup);
+    return this.factories[index] || this.registerSetupFunction(setup);
   }
 
   /**
    * Register a component's setup function.
    *
-   * This takes a setup function and produces a component *factory*. The
-   * factory is registered in this registry.
+   * This takes a setup function and produces a component factory.
+   * The component factory will be used to produce component instances.
+   *
+   * Both the setup function and factory are registered.
    *
    * @param setup Component setup function
+   * @returns Component factory
    */
   private registerSetupFunction<S extends AnyState>(
     setup: Setup<S>
   ): ComponentFactory<S> {
-    const factory = makeComponentFactory(setup, this.getState);
-    this.registerComponentFactory(factory);
-    setup.workframeId = this.factories.length - 1;
-    return factory;
-  }
-
-  /**
-   * Register a component factory.
-   *
-   * @param factory
-   */
-  private registerComponentFactory<S extends AnyState>(
-    factory: ComponentFactory<S>
-  ): ComponentFactory<S> {
+    const factory = makeComponentFactory(setup, this.getAppState);
+    this.setupFunctions.push(setup);
     this.factories.push(factory);
     return factory;
   }
 
   /**
-   * Call component setup function and return its render function.
+   * Set up a component instance and return its render function.
    *
-   * This sets the current component so that any `onMount` and/or
-   * `onRender` hooks in the setup function will be registered to the
-   * component.
-   *
-   * @param setup
+   * @param setup Component setup function
+   * @returns The component's ID & render function
    */
-  public callSetup<S extends AnyState>(
+  public setUpComponent<S extends AnyState>(
     setup: Setup<S>,
     initialState: S
-  ): Render<S> {
-    this.currentComponentId = setup.workframeId as number;
-    const render = setup(initialState);
-    return render;
+  ): [number, Render<S>] {
+    const id = this.mountActions.length;
+    this.mountActions.push([]);
+    this.renderActions.push([]);
+    return [id, setup(initialState)];
   }
 
   /**
-   * Add mount action for *current* component.
+   * Add mount action for component currently being registered.
    *
    * @param id
    * @param action
    */
   public addMountAction(action: OnMountAction<any>) {
-    const id = this.currentComponentId;
-    if (typeof this.mountActions[id] === "undefined") {
-      this.mountActions[id] = [];
-    }
-    const actions = this.mountActions[id];
+    const index = this.mountActions.length - 1;
+    const actions = this.mountActions[index];
     actions.push(action);
   }
 
@@ -135,25 +106,19 @@ class Registry {
    *
    * @param id
    */
-  public getMountActions(id?: number) {
-    if (typeof id === "undefined") {
-      throw new Error("Component setup ID was not initialized");
-    }
+  public getMountActions<S extends AnyState>(id: number) {
     return this.mountActions[id];
   }
 
   /**
-   * Add render action for *current* component.
+   * Add render action for component currently being registered.
    *
    * @param id
    * @param action
    */
   public addRenderAction(action: OnRenderAction<any>) {
-    const id = this.currentComponentId;
-    if (typeof this.renderActions[id] === "undefined") {
-      this.renderActions[id] = [];
-    }
-    const actions = this.renderActions[id];
+    const index = this.renderActions.length - 1;
+    const actions = this.renderActions[index];
     actions.push(action);
   }
 
@@ -162,10 +127,7 @@ class Registry {
    *
    * @param id
    */
-  public getRenderActions(id?: number) {
-    if (typeof id === "undefined") {
-      throw new Error("Component setup ID was not initialized");
-    }
+  public getRenderActions<S extends AnyState>(id: number) {
     return this.renderActions[id];
   }
 }

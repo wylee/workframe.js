@@ -4,7 +4,6 @@ export type AnyState = Record<string, any>;
 
 export interface Setup<S extends AnyState> {
   (initialState?: S): Render<S>;
-  workframeId?: number;
 }
 
 export type OnMountAction<S extends AnyState> = (appState: S) => void;
