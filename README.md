@@ -101,7 +101,7 @@ production. There are no docs, features are missing, etc.
   // DOM and returns a function that's configured to update the view/
   // DOM whenever the app's state is updated. The new state will flow
   // down from the root component.
-  const [getState, updateState] = mount(
+  const updateState = mount(
     App,
     "#mount-point",
     updater,
