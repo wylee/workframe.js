@@ -13,8 +13,8 @@ import { makeComponentFactory } from "./component";
  * Component registry.
  */
 class Registry {
-  public getState: () => AnyState = () => ({});
-  public updateState: (action: Action<any>) => AnyState = () => ({});
+  public getAppState: () => AnyState = () => ({});
+  public updateAppState: (action: Action<any>) => AnyState = () => ({});
 
   private factories: any[] = [];
   private currentComponentId = 0;
@@ -24,19 +24,17 @@ class Registry {
   /**
    * Register a function that returns the app's current state.
    *
-   * @param getState
+   * @param getAppState
    */
-  public registerGetState(getState: () => AnyState) {
-    this.getState = getState;
+  public registerGetAppState(getAppState: () => AnyState) {
+    this.getAppState = getAppState;
   }
 
   /**
    * Register a function that sets the app's current state.
    *
-   * @param updateSate
+   * @param updateAppState
    */
-  public registerUpdateState<T>(updateState: (action: Action<T>) => AnyState) {
-    this.updateState = updateState;
   }
 
   /**
@@ -51,6 +49,8 @@ class Registry {
       return undefined;
     }
     return this.factories[id];
+  public registerUpdateAppState<T>(updateAppState: (action: Action<T>) => AnyState) {
+    this.updateAppState = updateAppState;
   }
 
   /**

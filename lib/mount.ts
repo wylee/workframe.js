@@ -44,8 +44,8 @@ export function mount<S extends AnyState, T>(
     return state;
   }
 
-  registry.registerGetState(getState);
-  registry.registerUpdateState(updateState);
+  registry.registerGetAppState(getState);
+  registry.registerUpdateAppState(updateState);
 
   const rootFactory = registry.getOrRegisterComponentFactory(setup);
   const rootComponent = rootFactory(initialState);
