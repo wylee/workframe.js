@@ -1,16 +1,26 @@
-import { AnyState, ComponentFactory, Setup } from "./interfaces";
+import { Action, AnyState, ComponentFactory, OnMountAction, OnRenderAction, Render, Setup } from "./interfaces";
 /**
  * Component registry.
  */
 declare class Registry {
-    getState: () => AnyState;
+    getAppState: () => AnyState;
+    updateAppState: (action: Action<any>) => AnyState;
+    private setupFunctions;
     private factories;
+    private mountActions;
+    private renderActions;
     /**
      * Register a function that returns the app's current state.
      *
-     * @param getState
+     * @param getAppState
      */
-    registerGetState(getState: () => AnyState): void;
+    registerGetAppState(getAppState: () => AnyState): void;
+    /**
+     * Register a function that sets the app's current state.
+     *
+     * @param updateAppState
+     */
+    registerUpdateAppState<T>(updateAppState: (action: Action<T>) => AnyState): void;
     /**
      * Get the component factory associated with the specified setup
      * function. If the associated factory hasn't been registered yet,
@@ -20,26 +30,50 @@ declare class Registry {
      */
     getOrRegisterComponentFactory<S extends AnyState>(setup: Setup<S>): ComponentFactory<S>;
     /**
-     * Get a component factory by key.
+     * Register a component's setup function.
+     *
+     * This takes a setup function and produces a component factory.
+     * The component factory will be used to produce component instances.
+     *
+     * Both the setup function and factory are registered.
+     *
+     * @param setup Component setup function
+     * @returns Component factory
+     */
+    private registerSetupFunction;
+    /**
+     * Set up a component instance and return its render function.
+     *
+     * @param setup Component setup function
+     * @returns The component's ID & render function
+     */
+    setUpComponent<S extends AnyState>(setup: Setup<S>, initialState: S): [number, Render<S>];
+    /**
+     * Add mount action for component currently being registered.
+     *
+     * @param id
+     * @param action
+     */
+    addMountAction(action: OnMountAction<any>): void;
+    /**
+     * Get mount actions for component.
      *
      * @param id
      */
-    getFactory<S extends AnyState>(id?: number): ComponentFactory<S> | undefined;
+    getMountActions<S extends AnyState>(id: number): OnMountAction<any>[];
     /**
-     * Register a component factory.
+     * Add render action for component currently being registered.
      *
-     * @param factory
+     * @param id
+     * @param action
      */
-    private registerComponentFactory;
+    addRenderAction(action: OnRenderAction<any>): void;
     /**
-     * Register a component's setup function.
+     * Get render actions for component.
      *
-     * This takes a setup function and produces a component *factory*. The
-     * factory is registered in this registry.
-     *
-     * @param setup Component setup function
+     * @param id
      */
-    private registerSetupFunction;
+    getRenderActions<S extends AnyState>(id: number): OnRenderAction<any>[];
 }
 declare const _default: Registry;
 export default _default;

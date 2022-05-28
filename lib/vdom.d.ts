@@ -1,6 +1,6 @@
 import { JsxVNodeChildren, VNode, VNodeData } from "snabbdom";
 import { AnyState, Setup } from "./interfaces";
-export declare const patch: (oldVnode: VNode | Element, vnode: VNode) => VNode;
+export declare const patch: (oldVnode: VNode | Element | DocumentFragment, vnode: VNode) => VNode;
 /**
  * Create a VNode from a JSX node.
  *

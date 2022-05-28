@@ -4,7 +4,7 @@ import registry from "./registry";
 import { patch } from "./vdom";
 
 /**
- * Mount root component into DOM.
+ * Mount root component into DOM and return update function.
  *
  * NOTE: The mount point DOM element will be *replaced* by the mounted
  * node rather than being appended to it.
@@ -13,6 +13,7 @@ import { patch } from "./vdom";
  * @param mountPoint DOM node or selector to mount root component into
  * @param initialState Initial root state
  * @param children Child nodes
+ * @returns Function to update app state
  */
 export function mount<S extends AnyState, T>(
   setup: Setup<S>,
